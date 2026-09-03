@@ -5,4 +5,4 @@ pages_build_output_dir = "public"
 [[d1_databases]]
 binding = "DB"
 database_name = "controle-carga-db"
-database_id = "REPLACE_AFTER_CREATE"
+database_id = "11a8c008-9498-4a11-b6cb-9b2a447b46a3"
