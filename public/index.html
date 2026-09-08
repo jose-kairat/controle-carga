@@ -161,6 +161,19 @@
   .status-pill{font-size:11px; font-weight:700; padding:4px 10px; border-radius:20px; text-transform:uppercase; letter-spacing:0.04em;}
   .status-pill.ok{background:rgba(63,163,77,0.2); color:#7FCB8B;}
   .status-pill.pending{background:rgba(255,255,255,0.08); color:var(--text-on-dark-dim);}
+  .section-title{font-family:'Barlow Condensed'; text-transform:uppercase; font-size:14px; letter-spacing:0.04em; color:var(--text-on-dark-dim); font-weight:600; margin:26px 0 4px;}
+  .section-hint{font-size:11px; color:var(--text-on-dark-dim); margin-bottom:10px;}
+  .daily-table-wrap{overflow-x:auto; border:1px solid var(--line-on-dark); border-radius:4px; background:var(--ink-card);}
+  .daily-table{border-collapse:collapse; width:100%; min-width:520px; font-size:13px;}
+  .daily-table th, .daily-table td{padding:9px 10px; text-align:center; white-space:nowrap;}
+  .daily-table th{font-family:'Barlow Condensed'; text-transform:uppercase; font-size:10px; letter-spacing:0.05em; color:var(--text-on-dark-dim); font-weight:600; border-bottom:1px solid var(--line-on-dark); text-align:center;}
+  .daily-table th:first-child, .daily-table td:first-child{text-align:left; position:sticky; left:0; background:var(--ink-card);}
+  .daily-table td.name{font-family:'Barlow Condensed'; text-transform:uppercase; font-weight:700; letter-spacing:0.02em; font-size:13px;}
+  .daily-table td{font-family:'JetBrains Mono'; border-bottom:1px solid var(--line-on-dark);}
+  .daily-table tr:last-child td{border-bottom:none;}
+  .daily-table td.dim{color:var(--text-on-dark-dim);}
+  .daily-table td.pain-cell{color:#E38C7C; font-weight:700;}
+  .daily-table tr.no-data td{color:var(--text-on-dark-dim); opacity:0.6;}
 </style>
 </head>
 <body>
@@ -368,6 +381,17 @@ const STR = {
   password_mismatch_toast:{pt:'As senhas não coincidem', ru:'Пароли не совпадают'},
   password_changed_toast:{pt:'Senha alterada ✓', ru:'Пароль изменён ✓'},
   region_unknown:{pt:'Região não informada', ru:'Область не указана'},
+  daily_table_title:{pt:'Respostas de hoje', ru:'Ответы за сегодня'},
+  daily_table_hint:{pt:'Pré-treino e PSE/pós-treino de cada atleta, no dia de hoje.', ru:'Анкета до тренировки и PSE/после тренировки каждого игрока сегодня.'},
+  th_athlete:{pt:'Atleta', ru:'Игрок'},
+  th_sleep:{pt:'Sono', ru:'Сон'},
+  th_fatigue:{pt:'Cansaço', ru:'Усталость'},
+  th_pain:{pt:'Dor', ru:'Боль'},
+  th_stress:{pt:'Estresse', ru:'Стресс'},
+  th_pse:{pt:'PSE', ru:'PSE'},
+  th_duration:{pt:'Min', ru:'Мин'},
+  th_load:{pt:'Carga', ru:'Нагрузка'},
+  no_response_today:{pt:'Nenhum atleta enviou resposta hoje ainda.', ru:'Сегодня ещё никто из игроков не ответил.'},
 };
 function t(key){ const e=STR[key]; return e ? (e[STATE.lang]||e.pt) : key; }
 const REGION_LABELS_RU = {
@@ -846,6 +870,34 @@ function summarize(name, entries){
   return {name, entries, series:s, last, todayEntry, reliable};
 }
 let STAFF_SUMMARIES = [];
+function dailyResponsesTableHtml(summaries){
+  const rows = summaries.map(s=>{
+    const te = s.todayEntry;
+    const dash = `<td class="dim">—</td>`;
+    const painCell = te && te.dor!=null ? (te.dor>0 ? `<td class="pain-cell">${te.dor}</td>` : `<td>${te.dor}</td>`) : dash;
+    return `
+    <tr class="${te ? '' : 'no-data'}">
+      <td class="name">${s.name}</td>
+      ${te && te.sleep!=null ? `<td>${te.sleep}</td>` : dash}
+      ${te && te.fatigue!=null ? `<td>${te.fatigue}</td>` : dash}
+      ${painCell}
+      ${te && te.stress!=null ? `<td>${te.stress}</td>` : dash}
+      ${te && te.pse!=null ? `<td>${te.pse}</td>` : dash}
+      ${te && te.duration!=null ? `<td>${te.duration}</td>` : dash}
+      ${te && te.load!=null ? `<td>${Math.round(te.load)}</td>` : dash}
+    </tr>`;
+  }).join('');
+  return `
+  <div class="daily-table-wrap">
+    <table class="daily-table">
+      <thead><tr>
+        <th>${t('th_athlete')}</th><th>${t('th_sleep')}</th><th>${t('th_fatigue')}</th><th>${t('th_pain')}</th>
+        <th>${t('th_stress')}</th><th>${t('th_pse')}</th><th>${t('th_duration')}</th><th>${t('th_load')}</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+}
 function renderStaffDash(){
   return `
   <div class="dash">
@@ -888,7 +940,10 @@ async function loadStaffDash(){
       <div class="sum-chip risk-caution"><div class="n">${caution}</div><div class="l">Atenção</div></div>
       <div class="sum-chip"><div class="n">${semDado}</div><div class="l">Sem dados</div></div>
     </div>
-    <div class="roster-grid">${cards}</div>`;
+    <div class="roster-grid">${cards}</div>
+    <div class="section-title">${t('daily_table_title')}</div>
+    <div class="section-hint">${t('daily_table_hint')}</div>
+    ${dailyResponsesTableHtml(STAFF_SUMMARIES)}`;
   attachHandlers(); // cards above were injected after the initial render() pass, so they need their own click binding
 }
 /* ============================= STAFF: manage roster ============================= */
