@@ -307,7 +307,7 @@ function todayStr(){
   const m = String(d.getMonth()+1).padStart(2,'0');
   const day = String(d.getDate()).padStart(2,'0');
   return `${y}-${m}-${day}`;
-}().slice(0,10); }
+}
 function toDate(dstr){ const [y,m,d]=dstr.split('-').map(Number); return new Date(Date.UTC(y,m-1,d)); }
 function addDays(dstr, n){ const d=toDate(dstr); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); }
 function fmtShort(dstr){ const d=toDate(dstr); return d.getUTCDate().toString().padStart(2,'0')+'/'+(d.getUTCMonth()+1).toString().padStart(2,'0'); }
