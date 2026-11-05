@@ -174,6 +174,45 @@
   .daily-table td.dim{color:var(--text-on-dark-dim);}
   .daily-table td.pain-cell{color:#E38C7C; font-weight:700;}
   .daily-table tr.no-data td{color:var(--text-on-dark-dim); opacity:0.6;}
+
+  /* ---- Relatório semanal (comissão) ---- */
+  .rp-actions{display:flex; gap:8px; flex-wrap:wrap; margin:12px 0 4px;}
+  .rp-actions .btn{flex:1; min-width:120px;}
+  .rp-weeks{display:flex; gap:6px; margin:8px 0 0;}
+  .rp-weeks button{flex:1; padding:8px; border:1px solid var(--line-on-dark); background:transparent; color:var(--text-on-dark-dim); font-family:'JetBrains Mono'; font-size:12px; border-radius:3px; cursor:pointer;}
+  .rp-weeks button.sel{background:var(--turf); border-color:var(--turf); color:#fff;}
+  .rp-alerts{list-style:none; margin:0 0 6px; padding:0;}
+  .rp-alerts li{background:var(--ink-card); border:1px solid var(--line-on-dark); border-left:3px solid var(--amber); border-radius:3px; padding:9px 12px; margin-bottom:8px; font-size:13px; line-height:1.4;}
+  .rp-alerts li.red{border-left-color:var(--flare);}
+  .rp-alerts li.ok{border-left-color:var(--zone-good);}
+  .rp-alerts b{font-family:'Barlow Condensed'; text-transform:uppercase; letter-spacing:0.03em;}
+  .rp-table td.up{color:#E38C7C;} .rp-table td.down{color:#8FB6D6;}
+  .rp-table tr.total td{font-weight:700; border-top:1px solid var(--line-on-dark); background:rgba(255,255,255,0.04);}
+  .rp-table td.partial, .rp-table th.partial{opacity:0.7; font-style:italic;}
+  .rp-note{font-size:11px; color:var(--text-on-dark-dim); margin-top:8px; line-height:1.45;}
+  .rp-print-title{display:none;}
+  @media print{
+    @page{size:A4 landscape; margin:10mm;}
+    body, .dash{background:#fff !important; color:#000 !important;}
+    #app{max-width:none;}
+    .topbar, .rp-actions, .rp-weeks, .rp-hide-print, .toast{display:none !important;}
+    .rp-print-title{display:block; font-family:'Barlow Condensed',sans-serif; font-size:20px; text-transform:uppercase; margin:0 0 8px; color:#000;}
+    .dash-body{padding:0 !important;}
+    .daily-table-wrap, .chart-card, .rp-alerts li{background:#fff !important; border:1px solid #bbb !important; color:#000 !important;}
+    .daily-table th, .daily-table td, .daily-table th:first-child, .daily-table td:first-child{background:#fff !important; color:#000 !important; border-color:#ccc !important;}
+    .rp-table td.up, .rp-table td.down{color:#000 !important; font-weight:700;}
+    .section-title, .section-hint, .rp-note, .chart-card h4{color:#333 !important;}
+    .rp-alerts li{break-inside:avoid;}
+    .chart-wrap{height:170px !important;}
+    .rp-table tr.total td{background:#eee !important;}
+    .daily-table-wrap{overflow:visible !important;}
+    .rp-table{min-width:0 !important; width:100%; font-size:9px;}
+    .rp-table th, .rp-table td{padding:4px 5px !important; font-size:9px !important;}
+    .rp-table td.name{font-size:10px !important;}
+    .rp-table th:first-child, .rp-table td:first-child{position:static !important;}
+    .rp-table tr{break-inside:avoid;}
+    .section-title{margin-top:14px;}
+  }
 </style>
 </head>
 <body>
@@ -617,12 +656,14 @@ function render(){
   else if(STATE.screen==='staff_gate') html = renderStaffGate();
   else if(STATE.screen==='staff_dash') html = renderStaffDash();
   else if(STATE.screen==='staff_manage') html = renderStaffManage();
+  else if(STATE.screen==='staff_report') html = renderStaffReport();
   else if(STATE.screen==='staff_detail') html = renderStaffDetail();
   else if(STATE.screen==='change_password') html = renderChangePassword();
   if(STATE.toast) html += `<div class="toast">${STATE.toast}</div>`;
   app.innerHTML = html;
   attachHandlers();
   if(STATE.screen==='staff_dash') loadStaffDash();
+  if(STATE.screen==='staff_report') loadStaffReport();
   if(STATE.screen==='staff_detail') drawStaffDetailCharts();
   if(STATE.screen==='athlete_history') loadAthleteHistoryStatus();
 }
@@ -963,6 +1004,7 @@ async function loadStaffDash(){
     </div>`;
   }).join('');
   body.innerHTML = `
+    <button class="btn small secondary" data-action="go-staff-report" style="width:100%; margin-bottom:14px;">Relatório semanal</button>
     <div class="dash-summary">
       <div class="sum-chip risk-alta"><div class="n">${alta}</div><div class="l">Risco alto</div></div>
       <div class="sum-chip risk-caution"><div class="n">${caution}</div><div class="l">Atenção</div></div>
@@ -1057,6 +1099,189 @@ async function drawStaffDetailCharts(){
   buildLoadChart('sc1', s);
   buildWellnessChart('sc2', entries);
 }
+/* ============================= STAFF: relatório semanal ============================= */
+/* Tudo é calculado no navegador a partir de /api/state (mesma fonte do painel) — sem mudança no
+   banco. Semanas são de segunda a domingo; a semana em andamento aparece como "parcial" e fica de
+   fora das comparações (Δ%) e das médias de bem-estar. */
+let REPORT_WEEKS = 4;
+let REPORT_DATA = null;
+function esc(x){ return String(x==null?'':x).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function weekStartOf(dstr){ const d=toDate(dstr); const dow=(d.getUTCDay()+6)%7; return addDays(dstr, -dow); }
+function avgOrNull(arr){ const v=arr.filter(x=>x!=null && !isNaN(x)); return v.length ? v.reduce((a,b)=>a+b,0)/v.length : null; }
+function fmtN(v, dec){ return (v==null || isNaN(v)) ? '—' : Number(v).toFixed(dec||0); }
+function fmtPct(v){ return v==null ? '—' : (v>0?'+':'')+Math.round(v*100)+'%'; }
+function buildReport(weeks){
+  const today = todayStr();
+  const curStart = weekStartOf(today);
+  const starts = [];
+  for(let i=weeks-1;i>=0;i--) starts.push(addDays(curStart, -7*i));
+  const by = DOC_STATE.entries || {};
+  const names = (STATE.roster||[]).map(a=>a.name);
+  const nW = starts.length;
+  const athletes = names.map(name=>{
+    const entries = by[name] || [];
+    const perWeek = starts.map(st=>{
+      const en = addDays(st,6);
+      const es = entries.filter(e=>e.date>=st && e.date<=en);
+      const withLoad = es.filter(e=>e.load!=null && e.load>0);
+      return {
+        start: st, partial: st===curStart,
+        load: es.reduce((a,e)=>a+(e.load||0),0),
+        sessions: withLoad.length,
+        minutes: es.reduce((a,e)=>a+(e.duration||0),0),
+        pse: avgOrNull(es.map(e=>e.pse)),
+        sleep: avgOrNull(es.map(e=>e.sleep)),
+        fatigue: avgOrNull(es.map(e=>e.fatigue)),
+        stress: avgOrNull(es.map(e=>e.stress)),
+        painDays: es.filter(e=>e.dor>0).length,
+        days: es.length
+      };
+    });
+    const ser = entries.length ? computeSeries(entries) : null;
+    const last = ser ? ser[ser.length-1] : null;
+    const reliable = entries.length >= 7;
+    const lastComplete = perWeek[nW-2] || null;
+    const prevComplete = perWeek[nW-3] || null;
+    const delta = (lastComplete && prevComplete && prevComplete.load>0) ? lastComplete.load/prevComplete.load-1 : null;
+    return {name, entries, perWeek, last, reliable, delta,
+      acwr: reliable && last ? last.acwr : null,
+      monotony: last ? last.monotony : null, strain: last ? last.strain : null};
+  });
+  const team = starts.map((st,i)=>{
+    const tot = athletes.reduce((a,x)=>a+x.perWeek[i].load,0);
+    const sess = athletes.reduce((a,x)=>a+x.perWeek[i].sessions,0);
+    const active = athletes.filter(x=>x.perWeek[i].load>0).length;
+    return {start:st, partial: st===curStart, load: tot, sessions: sess, active, avg: names.length? tot/names.length : 0};
+  });
+  const tLast = team[nW-2], tPrev = team[nW-3];
+  const teamDelta = (tLast && tPrev && tPrev.load>0) ? tLast.load/tPrev.load-1 : null;
+  /* alertas automáticos */
+  const alerts = [];
+  const alta = athletes.filter(a=>a.acwr!=null && a.acwr>1.5);
+  const caut = athletes.filter(a=>a.acwr!=null && a.acwr>1.3 && a.acwr<=1.5);
+  const baixo = athletes.filter(a=>a.acwr!=null && a.acwr<0.8);
+  if(alta.length) alerts.push({cls:'red', t:`<b>ACWR alto (&gt;1,5):</b> ${alta.map(a=>esc(a.name)+' ('+a.acwr.toFixed(2)+')').join(', ')}`});
+  if(caut.length) alerts.push({cls:'', t:`<b>ACWR em atenção (1,3–1,5):</b> ${caut.map(a=>esc(a.name)+' ('+a.acwr.toFixed(2)+')').join(', ')}`});
+  if(baixo.length) alerts.push({cls:'', t:`<b>ACWR abaixo de 0,8:</b> ${baixo.length} de ${athletes.filter(a=>a.reliable).length} atletas com dados suficientes. Confira se a semana teve jogo, viagem ou folga que não entrou no app.`});
+  if(teamDelta!=null && Math.abs(teamDelta)>=0.3) alerts.push({cls: teamDelta<0?'':'red', t:`<b>Carga da equipe ${teamDelta<0?'caiu':'subiu'} ${Math.abs(Math.round(teamDelta*100))}%</b> na última semana completa (${Math.round(tLast.load).toLocaleString('pt-BR')} contra ${Math.round(tPrev.load).toLocaleString('pt-BR')}).`});
+  const dayList = []; for(let i=4;i>=0;i--) dayList.push(addDays(today,-i));
+  const persist = athletes.filter(a=>{ const ds=new Set(a.entries.filter(e=>e.dor>0).map(e=>e.date)); return dayList.filter(d=>ds.has(d)).length>=3; });
+  if(persist.length) alerts.push({cls:'red', t:`<b>Dor em 3 ou mais dos últimos 5 dias:</b> ${persist.map(a=>{ const le=[...a.entries].reverse().find(e=>e.dor>0 && e.dorRegiao); return esc(a.name)+(le?' ('+esc(le.dorRegiao.label)+')':''); }).join('; ')}`});
+  const painToday = athletes.filter(a=>a.entries.some(e=>e.date===today && e.dor>0));
+  if(painToday.length) alerts.push({cls:'', t:`<b>Dor hoje:</b> ${painToday.map(a=>esc(a.name)).join(', ')}`});
+  const sleepLow = athletes.filter(a=>a.entries.some(e=>e.date===today && e.sleep!=null && e.sleep<=4));
+  if(sleepLow.length) alerts.push({cls:'', t:`<b>Sono baixo hoje (≤4):</b> ${sleepLow.map(a=>esc(a.name)).join(', ')}`});
+  const since = addDays(today,-2);
+  const noResp = athletes.filter(a=>!a.entries.some(e=>e.date>=since));
+  if(noResp.length) alerts.push({cls:'', t:`<b>Sem nenhuma resposta nos últimos 3 dias:</b> ${noResp.map(a=>esc(a.name)).join(', ')}`});
+  if(!alerts.length) alerts.push({cls:'ok', t:'Nenhum alerta automático no período.'});
+  return {today, curStart, starts, athletes, team, teamDelta, alerts, weeks};
+}
+function renderStaffReport(){
+  return `
+  <div class="dash">
+    <div class="topbar dark"><button class="back-btn" data-action="go-staff">‹ Painel</button><div class="topbar-title">Relatório semanal</div><div style="width:50px"></div></div>
+    <div class="dash-body" id="staff-report-body">Carregando…</div>
+  </div>`;
+}
+async function loadStaffReport(){
+  if(!document.getElementById('staff-report-body')) return;
+  await refreshDocState();
+  const body = document.getElementById('staff-report-body');
+  if(!body || STATE.screen!=='staff_report') return;
+  if(!STATE.roster.length){ body.innerHTML = `<div class="empty">Nenhum atleta cadastrado ainda.</div>`; return; }
+  const R = buildReport(REPORT_WEEKS);
+  REPORT_DATA = R;
+  const nW = R.starts.length;
+  const wkLabel = (st,partial)=> fmtShort(st)+'–'+fmtShort(addDays(st,6))+(partial?' (parcial)':'');
+  const wkHead = R.starts.map(st=>`<th class="${st===R.curStart?'partial':''}">${wkLabel(st, st===R.curStart)}</th>`).join('');
+  const rows = R.athletes.map(a=>{
+    const loadCells = a.perWeek.map(w=>`<td class="${w.partial?'partial':''}">${w.load>0?Math.round(w.load).toLocaleString('pt-BR'):'<span class="dim">—</span>'}</td>`).join('');
+    const lc = a.perWeek[nW-2];
+    const dcls = a.delta==null?'':(a.delta>=0.3?'up':(a.delta<=-0.3?'down':''));
+    return `<tr>
+      <td class="name">${esc(a.name)}</td>${loadCells}
+      <td class="${dcls}">${fmtPct(a.delta)}</td>
+      <td>${fmtN(a.acwr,2)}</td><td>${fmtN(a.monotony,2)}</td><td>${fmtN(a.strain,0)}</td>
+      <td>${lc?fmtN(lc.sleep,1):'—'}</td><td>${lc?fmtN(lc.fatigue,1):'—'}</td><td>${lc?fmtN(lc.stress,1):'—'}</td>
+      <td>${lc?(lc.painDays||'0'):'—'}</td><td>${lc?fmtN(lc.pse,1):'—'}</td><td>${lc?lc.sessions:'—'}</td>
+    </tr>`;
+  }).join('');
+  const teamCells = R.team.map(w=>`<td class="${w.partial?'partial':''}">${Math.round(w.load).toLocaleString('pt-BR')}</td>`).join('');
+  const avgCells = R.team.map(w=>`<td class="${w.partial?'partial':''}">${Math.round(w.avg).toLocaleString('pt-BR')}</td>`).join('');
+  const sessCells = R.team.map(w=>`<td class="${w.partial?'partial':''}">${w.sessions} <span class="dim">(${w.active} atl.)</span></td>`).join('');
+  const dcls = R.teamDelta==null?'':(R.teamDelta>=0.3?'up':(R.teamDelta<=-0.3?'down':''));
+  const gen = new Date();
+  body.innerHTML = `
+    <div class="rp-print-title">Relatório de carga — gerado em ${gen.toLocaleDateString('pt-BR')} ${gen.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</div>
+    <div class="section-hint rp-hide-print" style="margin-top:0;">Período</div>
+    <div class="rp-weeks">${[4,6,8].map(n=>`<button class="${n===REPORT_WEEKS?'sel':''}" data-action="report-weeks" data-weeks="${n}">${n} semanas</button>`).join('')}</div>
+    <div class="rp-actions">
+      <button class="btn small" data-action="report-print">Imprimir / salvar PDF</button>
+      <button class="btn small secondary" data-action="report-csv-weekly">CSV semanal</button>
+      <button class="btn small secondary" data-action="report-csv-daily">CSV diário</button>
+    </div>
+
+    <div class="section-title">Alertas automáticos</div>
+    <ul class="rp-alerts">${R.alerts.map(a=>`<li class="${a.cls}">${a.t}</li>`).join('')}</ul>
+
+    <div class="section-title">Carga da equipe por semana</div>
+    <div class="chart-card"><div class="chart-wrap"><canvas id="rp-chart"></canvas></div></div>
+    <div class="daily-table-wrap"><table class="daily-table rp-table">
+      <thead><tr><th>Equipe</th>${wkHead}<th>Δ% últ. sem.</th></tr></thead>
+      <tbody>
+        <tr class="total"><td class="name">Carga total</td>${teamCells}<td class="${dcls}">${fmtPct(R.teamDelta)}</td></tr>
+        <tr><td class="name">Média por atleta</td>${avgCells}<td></td></tr>
+        <tr><td class="name">Sessões</td>${sessCells}<td></td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="section-title">Por atleta</div>
+    <div class="section-hint">Carga semanal (PSE × minutos). Δ%, bem-estar e PSE referem-se à última semana completa; ACWR, monotonia e strain são os valores atuais do painel.</div>
+    <div class="daily-table-wrap"><table class="daily-table rp-table">
+      <thead><tr><th>Atleta</th>${wkHead}<th>Δ%</th><th>ACWR</th><th>Monot.</th><th>Strain</th><th>Sono</th><th>Cans.</th><th>Estr.</th><th>Dias dor</th><th>PSE méd.</th><th>Sess.</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+    <div class="rp-note">Semanas de segunda a domingo; a semana em andamento (parcial) não entra no Δ% nem nas médias de bem-estar. Sono: maior = melhor. Cansaço e estresse: maior = pior. ACWR só aparece com 7 ou mais dias de registro. Jogos e viagens só entram se o atleta lançar PSE e duração.</div>`;
+  const cc = chartAxisColors();
+  new Chart(document.getElementById('rp-chart'), {
+    type:'bar',
+    data:{ labels:R.starts.map(st=>fmtShort(st)+(st===R.curStart?'*':'')),
+      datasets:[{label:'Carga total da equipe', data:R.team.map(w=>Math.round(w.load)),
+        backgroundColor:R.team.map(w=>w.partial?'rgba(227,30,36,0.3)':'rgba(227,30,36,0.7)')}] },
+    options:{ responsive:true, maintainAspectRatio:false,
+      scales:{ x:{ticks:{color:cc.tick}, grid:{display:false}}, y:{ticks:{color:cc.tick}, grid:{color:cc.grid}, beginAtZero:true} },
+      plugins:{legend:{display:false}} }
+  });
+  attachHandlers();
+}
+function csvCell(v){
+  if(v==null) return '';
+  let x = (typeof v==='number') ? String(Math.round(v*100)/100).replace('.',',') : String(v);
+  if(/[;"\n]/.test(x)) x = '"'+x.replace(/"/g,'""')+'"';
+  return x;
+}
+function downloadCsv(filename, rows){
+  const text = '﻿' + rows.map(r=>r.map(csvCell).join(';')).join('\r\n');
+  const blob = new Blob([text], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = filename;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+function exportReportCsv(kind){
+  const R = REPORT_DATA; if(!R) return;
+  if(kind==='weekly'){
+    const rows = [['Atleta','Semana (início segunda)','Semana parcial','Carga','Sessões','Minutos','PSE médio','Sono médio','Cansaço médio','Estresse médio','Dias com dor','Dias com resposta']];
+    R.athletes.forEach(a=>a.perWeek.forEach(w=>rows.push([a.name,w.start,w.partial?'sim':'não',w.load,w.sessions,w.minutes,w.pse,w.sleep,w.fatigue,w.stress,w.painDays,w.days])));
+    downloadCsv('relatorio_semanal_'+R.today+'.csv', rows);
+  } else {
+    const from = R.starts[0];
+    const rows = [['Atleta','Data','Sono','Cansaço','Dor','Região da dor','Estresse','PSE','Minutos','Carga']];
+    R.athletes.forEach(a=>a.entries.filter(e=>e.date>=from).forEach(e=>rows.push([a.name,e.date,e.sleep,e.fatigue,e.dor,e.dorRegiao?e.dorRegiao.label:'',e.stress,e.pse,e.duration,e.load])));
+    downloadCsv('relatorio_diario_'+R.today+'.csv', rows);
+  }
+}
 /* ============================= EVENT HANDLING ============================= */
 function attachHandlers(){
   document.querySelectorAll('[data-action]').forEach(el=>{
@@ -1107,6 +1332,11 @@ async function onAction(e){
   else if(action==='go-athlete-select') go('athlete_select');
   else if(action==='go-staff-gate') go('staff_gate');
   else if(action==='go-staff') go('staff_dash');
+  else if(action==='go-staff-report') go('staff_report');
+  else if(action==='report-weeks'){ REPORT_WEEKS = parseInt(e.currentTarget.getAttribute('data-weeks'))||4; loadStaffReport(); }
+  else if(action==='report-print') window.print();
+  else if(action==='report-csv-weekly') exportReportCsv('weekly');
+  else if(action==='report-csv-daily') exportReportCsv('daily');
   else if(action==='go-staff-manage'){ await refreshDocState(); go('staff_manage'); }
   else if(action==='go-athlete-home') go('athlete_home');
   else if(action==='go-athlete-pre'){ PRE_FORM={sleep:null,fatigue:null,pain:null,stress:null}; STATE.painRegions=[]; go('athlete_pre'); }
