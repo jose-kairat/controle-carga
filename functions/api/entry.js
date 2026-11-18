@@ -3,6 +3,8 @@
 // patch keeps its existing value (read-merge-write against the current row). This is the one
 // endpoint athletes hit, so it deliberately never touches the roster table — two different
 // athletes (or the same athlete's pré and pós answers) submitting close together never race.
+import { ensureSchema, getSession, unauthorized, forbidden } from '../_lib/auth.js';
+
 export async function onRequestPost(context) {
   const { request, env } = context;
   let body;
@@ -13,6 +15,12 @@ export async function onRequestPost(context) {
   }
 
   try {
+    await ensureSchema(env);
+    const session = await getSession(env, request);
+    if (!session) return unauthorized();
+    // An athlete can only write their own row; staff can write any.
+    if (session.role === 'athlete' && session.name !== name) return forbidden();
+
     const existing = await env.DB.prepare(
       'SELECT * FROM entries WHERE athlete = ? AND date = ?'
     ).bind(name, date).first();
