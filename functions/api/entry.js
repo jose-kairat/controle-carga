@@ -39,10 +39,8 @@ export async function onRequestPost(context) {
       stress, pse, duration, load
     ).run();
 
-    // Prune this athlete's history beyond a rolling window — well past what the 7/28-day
-    // ACWR charts use, keeps the table from growing without bound.
-    const cutoff = new Date(Date.now() - 120 * 86400000).toISOString().slice(0, 10);
-    await env.DB.prepare('DELETE FROM entries WHERE athlete = ? AND date < ?').bind(name, cutoff).run();
+    // History is kept for the whole season (no pruning). 19 athletes x 365 days is a tiny table,
+    // and season-long comparisons (carga x avaliações) need the full history.
 
     return Response.json({ ok: true });
   } catch (err) {
