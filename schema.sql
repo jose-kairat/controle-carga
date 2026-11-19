@@ -21,19 +21,3 @@ CREATE TABLE IF NOT EXISTS entries (
   load REAL,
   PRIMARY KEY (athlete, date)
 );
-
--- Server-side login sessions (random token per login). Also created on demand by the functions,
--- so applying this file by hand is optional.
-CREATE TABLE IF NOT EXISTS sessions (
-  token TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  role TEXT NOT NULL,
-  created INTEGER NOT NULL
-);
-
--- Failed-login counter used to lock an account for a few minutes after repeated wrong passwords.
-CREATE TABLE IF NOT EXISTS login_fail (
-  key TEXT PRIMARY KEY,
-  count INTEGER NOT NULL,
-  first_ts INTEGER NOT NULL
-);
