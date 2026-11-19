@@ -175,6 +175,68 @@
   .daily-table td.pain-cell{color:#E38C7C; font-weight:700;}
   .daily-table tr.no-data td{color:var(--text-on-dark-dim); opacity:0.6;}
 
+
+  /* ---- Novo visual (telas do atleta): escuro, alvos de toque grandes, mesmo vermelho do clube ---- */
+  .ath{background:#0F0F10; color:#FFFFFF; min-height:100vh; font-family:'Inter',sans-serif; padding:20px 20px 40px; display:flex; flex-direction:column; gap:22px;}
+  .ath a, .ath button{font-family:inherit;}
+  .ath-head{display:flex; align-items:center; gap:12px;}
+  .ath-back{display:flex; align-items:center; justify-content:center; width:44px; height:44px; flex-shrink:0; border:1px solid rgba(255,255,255,0.18); border-radius:22px; background:transparent; color:#fff; font-size:20px; cursor:pointer;}
+  .ath-eyebrow{font-size:12px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:#A8A8AD;}
+  .ath-title{margin:0; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:28px; line-height:1; text-transform:uppercase;}
+  .ath-lang{display:flex; gap:6px; margin-left:auto;}
+  .ath-lang button{min-width:44px; height:40px; border-radius:22px; border:1px solid rgba(255,255,255,0.2); background:transparent; color:#C9C9CC; font-size:13px; font-weight:700; cursor:pointer;}
+  .ath-lang button.sel{background:#E31E24; border-color:#E31E24; color:#fff;}
+  .ath-card{display:flex; flex-direction:column; gap:12px; background:#1A1A1C; border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:16px;}
+  .ath-card h2{margin:0; font-size:17px; font-weight:600;}
+  .ath-card .hint, .ath .hint{color:#A8A8AD; font-size:13px;}
+  .ath .field{margin:0;}
+  .ath .field label{color:#C9C9CC; font-size:13px; text-transform:none; letter-spacing:0; font-weight:600;}
+  .ath select, .ath input[type=text], .ath input[type=number], .ath input[type=password]{height:52px; border-radius:10px; border:1px solid rgba(255,255,255,0.18); background:#0F0F10; color:#fff; font-size:16px; padding:0 14px; width:100%;}
+  .ath .btn{height:56px; border-radius:12px; font-size:22px; letter-spacing:0.06em;}
+  .ath .btn.secondary{border-color:rgba(255,255,255,0.25); color:#fff;}
+  .ath .scale{grid-template-columns:repeat(6,minmax(0,1fr)); gap:8px;}
+  .ath .scale button{height:48px; padding:0; border-radius:10px; background:#0F0F10; border:1px solid rgba(255,255,255,0.18); color:#fff; font-size:17px; font-weight:600;}
+  .ath .scale button.sel{background:#E31E24; border-color:#E31E24; font-weight:700;}
+  .ath .scale-labels{color:#A8A8AD; font-size:12px;}
+  .ath .body-toggle button{height:44px; background:#0F0F10; border-color:rgba(255,255,255,0.18); color:#C9C9CC; border-radius:10px;}
+  .ath .body-toggle button.sel{background:#E31E24; border-color:#E31E24; color:#fff;}
+  .ath-home-name{margin:0; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:40px; line-height:1; text-transform:uppercase; overflow-wrap:anywhere;}
+  .ath-today{display:flex; align-items:center; gap:14px; border-radius:16px; padding:16px; border:1px solid rgba(255,255,255,0.1); background:#1A1A1C; color:#fff; width:100%; text-align:left; cursor:pointer;}
+  .ath-today.todo{background:#E31E24; border-color:#E31E24;}
+  .ath-today .dot{width:48px; height:48px; border-radius:24px; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:700; background:rgba(255,255,255,0.2); flex-shrink:0;}
+  .ath-today.done .dot{background:#1F5B2A; color:#CFF5D3;}
+  .ath-today .tt{font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:22px; letter-spacing:0.03em; text-transform:uppercase; display:block;}
+  .ath-today .ts{font-size:14px; display:block; color:#A8A8AD;}
+  .ath-today.todo .ts{color:#fff;}
+  .ath-h2{margin:0; font-size:13px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:#A8A8AD;}
+  .ath-week{display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:8px; align-items:end; height:120px;}
+  .ath-week .bar{width:100%; border-radius:4px; background:#FF5A5F; min-height:4px;}
+  .ath-week .bar.zero{background:#3A3A3E; height:4px !important; border-radius:2px;}
+  .ath-week .col{display:flex; flex-direction:column; justify-content:flex-end; height:100%;}
+  .ath-days{display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:8px; text-align:center; font-size:12px; font-weight:600; color:#A8A8AD;}
+  .ath-days .today{color:#fff;}
+  .ath-link{display:flex; justify-content:space-between; align-items:center; height:56px; border:0; border-top:1px solid rgba(255,255,255,0.1); background:none; color:#fff; font-size:16px; font-weight:600; width:100%; cursor:pointer; text-align:left;}
+  .ath-link span:last-child{color:#A8A8AD;}
+  .ath-pse{display:flex; flex-direction:column; gap:8px;}
+  .ath-pse button{display:flex; align-items:center; gap:14px; min-height:52px; padding:0 14px; border-radius:12px; color:#fff; border:1px solid rgba(255,255,255,0.1); background:#1A1A1C; font-weight:500; cursor:pointer; text-align:left;}
+  .ath-pse button.sel{border-color:#E31E24; background:#3A1214; font-weight:700;}
+  .ath-pse .n{font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:26px; width:28px; text-align:center; color:#A8A8AD;}
+  .ath-pse button.sel .n{color:#FF6A6E;}
+  .ath-pse .l{flex:1; font-size:16px;}
+  .ath-pse .b{display:block; height:8px; border-radius:4px; background:#4A4A4F;}
+  .ath-pse button.sel .b{background:#FF5A5F;}
+  .ath-step{display:flex; align-items:center; justify-content:space-between; gap:12px;}
+  .ath-step button{width:56px; height:56px; border-radius:28px; border:1px solid rgba(255,255,255,0.18); background:#0F0F10; color:#fff; font-size:26px; font-weight:600; cursor:pointer;}
+  .ath-step input{width:110px !important; text-align:center; font-family:'JetBrains Mono',monospace; font-weight:700; font-size:34px !important; height:64px !important; border:0 !important; background:transparent !important; padding:0 !important;}
+  .ath-load{display:flex; justify-content:space-between; align-items:baseline; gap:12px; padding:0 4px; font-size:14px; color:#C9C9CC;}
+  .ath-load b{font-family:'JetBrains Mono',monospace; font-size:22px; color:#fff; white-space:nowrap;}
+  .landing .club-row{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px;}
+  .landing .club-row .club-logo{margin:0;}
+  .landing .lang-toggle{margin:0;}
+  .landing .lang-toggle button{min-width:52px; height:44px; font-family:'Inter',sans-serif;}
+  .landing .role-card{border-radius:16px; min-height:84px;}
+  .toast{border-radius:12px;}
+
   /* ---- Relatório semanal (comissão) ---- */
   .rp-actions{display:flex; gap:8px; flex-wrap:wrap; margin:12px 0 4px;}
   .rp-actions .btn{flex:1; min-width:120px;}
@@ -487,6 +549,28 @@ const STR = {
   th_duration:{pt:'Min', ru:'Мин'},
   th_load:{pt:'Carga', ru:'Нагрузка'},
   no_response_today:{pt:'Nenhum atleta enviou resposta hoje ainda.', ru:'Сегодня ещё никто из игроков не ответил.'},
+  today_h:{pt:'Hoje', ru:'Сегодня'},
+  pre_done_hint:{pt:'Enviado hoje', ru:'Отправлено сегодня'},
+  pre_todo_hint:{pt:'Conte como você chega ao treino', ru:'Расскажите, как вы себя чувствуете'},
+  post_todo_hint:{pt:'Conte como foi o esforço', ru:'Расскажите, насколько было тяжело'},
+  week_title:{pt:'Sua semana', ru:'Ваша неделя'},
+  ua_unit:{pt:'UA', ru:'УЕ'},
+  week_note:{pt:'UA = unidades arbitrárias (PSE × minutos).', ru:'УЕ = условные единицы (PSE × минуты).'},
+  logout:{pt:'Sair', ru:'Выйти'},
+  minus5:{pt:'Menos 5 minutos', ru:'Минус 5 минут'},
+  plus5:{pt:'Mais 5 minutos', ru:'Плюс 5 минут'},
+  min_unit:{pt:'min', ru:'мин'},
+  load_label:{pt:'Carga da sessão (PSE × minutos)', ru:'Нагрузка сессии (PSE × минуты)'},
+  pre_eyebrow:{pt:'Antes do treino', ru:'Перед тренировкой'},
+  pre_heading:{pt:'Como você chega?', ru:'Как вы себя чувствуете?'},
+  post_eyebrow:{pt:'Depois do treino', ru:'После тренировки'},
+  post_heading:{pt:'Como foi o esforço?', ru:'Насколько было тяжело?'},
+  pse_levels:{pt:'Repouso|Muito leve|Leve|Moderado|Um pouco forte|Forte|Forte+|Muito forte|Intenso|Muito intenso|Máximo', ru:'Покой|Очень легко|Легко|Умеренно|Немного тяжело|Тяжело|Тяжело+|Очень тяжело|Интенсивно|Очень интенсивно|Максимум'},
+  weekdays:{pt:'Seg|Ter|Qua|Qui|Sex|Sáb|Dom', ru:'Пн|Вт|Ср|Чт|Пт|Сб|Вс'},
+  weekdays_long:{pt:'Domingo|Segunda|Terça|Quarta|Quinta|Sexta|Sábado', ru:'Воскресенье|Понедельник|Вторник|Среда|Четверг|Пятница|Суббота'},
+  months_long:{pt:'janeiro|fevereiro|março|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro', ru:'января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября|ноября|декабря'},
+  history_link:{pt:'Meu histórico', ru:'Мой статус сегодня'},
+  club_name:{pt:'Kairat Futsal', ru:'Kairat Futsal'},
 };
 function t(key){ const e=STR[key]; return e ? (e[STATE.lang]||e.pt) : key; }
 const REGION_LABELS_RU = {
@@ -729,10 +813,12 @@ const LOGO_B64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMwAAADMCAYAAAA/
 function renderLanding(){
   return `
   <div class="landing">
-    <img class="club-logo" src="${LOGO_B64}" alt="Kairat Futsal">
-    <div class="lang-toggle">
-      <button type="button" class="${STATE.lang==='pt'?'sel':''}" data-action="set-lang" data-lang="pt">PT</button>
-      <button type="button" class="${STATE.lang==='ru'?'sel':''}" data-action="set-lang" data-lang="ru">RU</button>
+    <div class="club-row">
+      <img class="club-logo" src="${LOGO_B64}" alt="Kairat Futsal" style="width:56px;height:56px;">
+      <div class="lang-toggle">
+        <button type="button" class="${STATE.lang==='pt'?'sel':''}" data-action="set-lang" data-lang="pt">PT</button>
+        <button type="button" class="${STATE.lang==='ru'?'sel':''}" data-action="set-lang" data-lang="ru">RU</button>
+      </div>
     </div>
     <div class="landing-eyebrow">${t('eyebrow')}</div>
     <h1>Controle<br>de <span>Carga</span></h1>
@@ -749,25 +835,67 @@ function renderLanding(){
     </div>
   </div>`;
 }
+/* ---- Novo visual: pedaços reutilizados nas telas do atleta ---- */
+function athLangToggle(){
+  return `<div class="ath-lang">
+    <button type="button" class="${STATE.lang==='pt'?'sel':''}" data-action="set-lang" data-lang="pt" aria-pressed="${STATE.lang==='pt'}">PT</button>
+    <button type="button" class="${STATE.lang==='ru'?'sel':''}" data-action="set-lang" data-lang="ru" aria-pressed="${STATE.lang==='ru'}">RU</button>
+  </div>`;
+}
+function athHead(backAction, eyebrow, title){
+  return `<div class="ath-head">
+    <button type="button" class="ath-back" data-action="${backAction}" aria-label="${t('back')}">←</button>
+    <div style="flex:1;min-width:0;"><div class="ath-eyebrow">${eyebrow}</div><h1 class="ath-title">${title}</h1></div>
+    ${athLangToggle()}
+  </div>`;
+}
+function tList(key){ return t(key).split('|'); }
+function athEntries(){
+  const e = (DOC_STATE && DOC_STATE.entries && STATE.currentAthlete) ? DOC_STATE.entries[STATE.currentAthlete] : null;
+  return Array.isArray(e) ? e : [];
+}
+function athToday(){
+  const day = todayStr();
+  const e = athEntries().find(x=>x.date===day) || {};
+  const local = getSubmittedToday() || {};
+  return {pre: e.sleep!=null || !!local.pre, pos: e.pse!=null || !!local.pos};
+}
+function athWeekBars(){
+  const now = new Date();
+  const dow = (now.getDay()+6)%7;            // 0 = segunda
+  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate()-dow);
+  const by = {}; athEntries().forEach(x=>{ by[x.date]=x; });
+  const days = []; let total = 0, max = 0;
+  for(let i=0;i<7;i++){
+    const d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate()+i);
+    const key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const load = by[key] && by[key].load ? Math.round(by[key].load) : 0;
+    total += load; if(load>max) max=load;
+    days.push({load, isToday: i===dow});
+  }
+  return {days, total, max};
+}
 /* ============================= ATHLETE: login ============================= */
 function renderAthleteSelect(){
   const options = STATE.roster.map(a=>`<option value="${a.name}">${a.name}</option>`).join('');
   return `
-  <div class="topbar"><button class="back-btn" data-action="go-landing">${t('back')}</button><div class="topbar-title">${t('who')}</div><div style="width:50px"></div></div>
-  <div class="screen">
-    <div class="field">
-      <label>${t('select_name')}</label>
-      <select id="sel-athlete-name">
-        <option value="">${t('choose')}</option>
-        ${options}
-      </select>
+  <div class="ath">
+    ${athHead('go-landing', t('club_name'), t('who'))}
+    <div class="ath-card" style="padding:20px;gap:16px;">
+      <div class="field">
+        <label>${t('select_name')}</label>
+        <select id="sel-athlete-name">
+          <option value="">${t('choose')}</option>
+          ${options}
+        </select>
+      </div>
+      <div class="field">
+        <label>${t('password')}</label>
+        <input type="password" id="athlete-password" placeholder="${t('password_ph')}">
+      </div>
+      <button class="btn" data-action="confirm-athlete-select">${t('enter')}</button>
+      <div class="hint">${t('not_listed_hint')}</div>
     </div>
-    <div class="field">
-      <label>${t('password')}</label>
-      <input type="password" id="athlete-password" placeholder="${t('password_ph')}">
-    </div>
-    <button class="btn" data-action="confirm-athlete-select">${t('enter')}</button>
-    <div class="hint">${t('not_listed_hint')}</div>
   </div>`;
 }
 /* ============================= STAFF: gate (login / first setup) ============================= */
@@ -804,17 +932,52 @@ function renderStaffGate(){
 }
 /* ============================= ATHLETE: home ============================= */
 function renderAthleteHome(){
+  const st = athToday();
+  const wk = athWeekBars();
+  const now = new Date();
+  const dateLine = tList('weekdays_long')[now.getDay()] + ', ' + now.getDate() + ' ' + (STATE.lang==='ru' ? '' : 'de ') + tList('months_long')[now.getMonth()];
+  const bars = wk.days.map(d=>{
+    const h = wk.max ? Math.max(4, Math.round(d.load/wk.max*100)) : 4;
+    return `<div class="col"><div class="bar ${d.load?'':'zero'}" style="height:${h}px"></div></div>`;
+  }).join('');
+  const dayLbls = tList('weekdays').map((l,i)=>`<span class="${wk.days[i].isToday?'today':''}">${l}</span>`).join('');
+  const card = (action, done, n, title, hint) => `
+    <button type="button" class="ath-today ${done?'done':'todo'}" data-action="${action}">
+      <span class="dot">${done?'✓':n}</span>
+      <span style="flex:1;"><span class="tt">${title}</span><span class="ts">${hint}</span></span>
+      <span aria-hidden="true" style="font-size:22px;">→</span>
+    </button>`;
   return `
-  <div class="topbar"><button class="back-btn" data-action="go-landing">${t('change')}</button><div class="topbar-title">${STATE.currentAthlete}</div><div style="width:50px"></div></div>
-  <div class="screen">
-    <div class="field" style="margin-bottom:26px;">
-      <button class="btn" data-action="go-athlete-pre" style="margin-bottom:10px;">${t('fill_pre')}</button>
-      <button class="btn secondary" data-action="go-athlete-post" style="margin-bottom:10px;">${t('fill_post')}</button>
-      <button class="btn secondary" data-action="go-athlete-history">${t('view_history')}</button>
+  <div class="ath">
+    <div class="ath-head" style="align-items:flex-start;">
+      <img src="${LOGO_B64}" alt="" style="width:52px;height:52px;object-fit:contain;flex-shrink:0;">
+      <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;">
+        <span class="ath-eyebrow">${dateLine}</span>
+        <h1 class="ath-home-name">${STATE.currentAthlete}</h1>
+      </div>
+      <button type="button" class="ath-back" style="width:auto;padding:0 14px;font-size:13px;font-weight:600;" data-action="go-landing">${t('logout')}</button>
     </div>
-    <div class="hint">${t('today_date')} ${fmtShort(todayStr())}</div>
-    <div class="field" style="margin-top:22px;">
-      <button class="btn secondary small" data-action="go-change-password">${t('change_password_link')}</button>
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <span class="ath-eyebrow" style="text-transform:none;letter-spacing:0;font-size:13px;">${t('lang_label')}</span>
+      ${athLangToggle()}
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <h2 class="ath-h2">${t('today_h')}</h2>
+      ${card('go-athlete-pre', st.pre, 1, t('pre_title'), st.pre ? t('pre_done_hint') : t('pre_todo_hint'))}
+      ${card('go-athlete-post', st.pos, 2, t('post_title'), st.pos ? t('pre_done_hint') : t('post_todo_hint'))}
+    </div>
+    <div class="ath-card" style="padding:18px;gap:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;">
+        <h2 class="ath-h2">${t('week_title')}</h2>
+        <span class="mono" style="font-weight:700;font-size:20px;">${wk.total.toLocaleString('pt-BR').replace(/\./g,' ')} <span style="font-size:12px;font-weight:500;color:#A8A8AD;">${t('ua_unit')}</span></span>
+      </div>
+      <div class="ath-week">${bars}</div>
+      <div class="ath-days">${dayLbls}</div>
+      <div class="hint" style="font-size:12px;">${t('week_note')}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;">
+      <button type="button" class="ath-link" data-action="go-athlete-history"><span>${t('history_link')}</span><span aria-hidden="true">→</span></button>
+      <button type="button" class="ath-link" data-action="go-change-password"><span>${t('change_password_link')}</span><span aria-hidden="true">→</span></button>
     </div>
   </div>`;
 }
@@ -822,11 +985,13 @@ function renderAthleteHome(){
 function renderChangePassword(){
   const backAction = STATE.staffLoggedIn ? 'go-staff' : 'go-athlete-home';
   return `
-  <div class="topbar"><button class="back-btn" data-action="${backAction}">${t('cancel')}</button><div class="topbar-title">${t('change_password_title')}</div><div style="width:50px"></div></div>
-  <div class="screen">
-    <div class="field"><label>${t('new_password_label')}</label><input type="password" id="own-new-pass" placeholder="${t('new_password_label')}"></div>
-    <div class="field"><label>${t('confirm_password_label')}</label><input type="password" id="own-new-pass2" placeholder="${t('confirm_password_label')}"></div>
-    <button class="btn" data-action="submit-change-password">${t('save_password_btn')}</button>
+  <div class="ath">
+    ${athHead(backAction, STATE.currentAthlete || STATE.currentStaff || '', t('change_password_title'))}
+    <div class="ath-card" style="padding:20px;gap:16px;">
+      <div class="field"><label>${t('new_password_label')}</label><input type="password" id="own-new-pass" placeholder="${t('new_password_label')}"></div>
+      <div class="field"><label>${t('confirm_password_label')}</label><input type="password" id="own-new-pass2" placeholder="${t('confirm_password_label')}"></div>
+      <button class="btn" data-action="submit-change-password">${t('save_password_btn')}</button>
+    </div>
   </div>`;
 }
 /* ============================= ATHLETE: pre-training form ============================= */
@@ -842,53 +1007,55 @@ function renderAthletePre(){
   const regions = STATE.bodyView==='frente' ? REGIONS_FRONT : REGIONS_BACK;
   const selectedIds = STATE.painRegions || [];
   const showRegionPicker = PRE_FORM.pain!=null && PRE_FORM.pain>0;
+  const q = (key, name, lo, hi) => `
+    <div class="ath-card">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;">
+        <h2>${t(key)}</h2>
+        <span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:26px;color:#FF5A5F;">${PRE_FORM[name]==null?'':PRE_FORM[name]}</span>
+      </div>
+      ${renderScale(name, 0, 10, PRE_FORM[name], [t(lo),t(hi)])}
+    </div>`;
   return `
-  <div class="topbar"><button class="back-btn" data-action="go-athlete-home">${t('cancel')}</button><div class="topbar-title">${t('pre_title')}</div><div style="width:50px"></div></div>
-  <div class="screen">
-    <div class="field">
-      <label>${t('sleep_label')}</label>
-      ${renderScale('sleep', 0, 10, PRE_FORM.sleep, [t('sleep_lo'),t('sleep_hi')])}
-    </div>
-    <div class="field">
-      <label>${t('fatigue_label')}</label>
-      ${renderScale('fatigue', 0, 10, PRE_FORM.fatigue, [t('fatigue_lo'),t('fatigue_hi')])}
-    </div>
-    <div class="field">
-      <label>${t('pain_label')}</label>
-      ${renderScale('pain', 0, 10, PRE_FORM.pain, [t('pain_lo'),t('pain_hi')])}
-    </div>
+  <div class="ath">
+    ${athHead('go-athlete-home', t('pre_eyebrow'), t('pre_heading'))}
+    ${q('sleep_label','sleep','sleep_lo','sleep_hi')}
+    ${q('fatigue_label','fatigue','fatigue_lo','fatigue_hi')}
+    ${q('pain_label','pain','pain_lo','pain_hi')}
     ${showRegionPicker ? `
-    <div class="field">
-      <label>${t('pain_region_label')}</label>
-      <div class="body-toggle">
+    <div class="ath-card">
+      <h2>${t('pain_region_label')}</h2>
+      <div class="body-toggle" style="margin:0;">
         <button type="button" class="${STATE.bodyView==='frente'?'sel':''}" data-action="body-view" data-view="frente">${t('front')}</button>
         <button type="button" class="${STATE.bodyView==='costas'?'sel':''}" data-action="body-view" data-view="costas">${t('back_view')}</button>
       </div>
       <div class="body-wrap">${bodySvg(regions, selectedIds, STATE.lang)}</div>
       <div class="hint">${selectedIds.length ? t('selected')+selectedIds.map(id=>regionLabel(id, STATE.lang)).join(', ') : t('pick_region_hint')}</div>
     </div>` : ''}
-    <div class="field">
-      <label>${t('stress_label')}</label>
-      ${renderScale('stress', 0, 10, PRE_FORM.stress, [t('stress_lo'),t('stress_hi')])}
-    </div>
-    <button class="btn" data-action="submit-pre" style="margin-top:8px;">${t('submit_pre')}</button>
+    ${q('stress_label','stress','stress_lo','stress_hi')}
+    <button class="btn" data-action="submit-pre">${t('submit_pre')}</button>
   </div>`;
 }
 /* ============================= ATHLETE: post-training form ============================= */
 let POST_FORM = {pse:null, duration:''};
 function renderAthletePost(){
+  const lv = tList('pse_levels');
+  const rows = lv.map((label,i)=>`
+    <button type="button" class="scale-btn ${POST_FORM.pse===i?'sel':''}" data-scale="pse" data-val="${i}" aria-pressed="${POST_FORM.pse===i}">
+      <span class="n">${i}</span><span class="l">${label}</span><span class="b" aria-hidden="true" style="width:${(i+1)*5}px"></span>
+    </button>`).join('');
   return `
-  <div class="topbar"><button class="back-btn" data-action="go-athlete-home">${t('cancel')}</button><div class="topbar-title">${t('post_title')}</div><div style="width:50px"></div></div>
-  <div class="screen">
-    <div class="field">
-      <label>${t('pse_label')}</label>
-      ${renderScale('pse', 0, 10, POST_FORM.pse, [t('pse_lo'),t('pse_hi')])}
+  <div class="ath">
+    ${athHead('go-athlete-home', t('post_eyebrow'), t('post_heading'))}
+    <div class="ath-pse">${rows}</div>
+    <div class="ath-card">
+      <h2>${t('duration_label')}</h2>
+      <div class="ath-step">
+        <button type="button" data-step="-5" aria-label="${t('minus5')}">−</button>
+        <input type="number" id="duration-input" min="0" inputmode="numeric" value="${POST_FORM.duration}" placeholder="${t('duration_ph')}">
+        <button type="button" data-step="5" aria-label="${t('plus5')}">+</button>
+      </div>
     </div>
-    <div class="field">
-      <label>${t('duration_label')}</label>
-      <input type="number" id="duration-input" min="0" value="${POST_FORM.duration}" placeholder="${t('duration_ph')}">
-    </div>
-    <div class="hint" id="load-preview" style="margin-bottom:18px;"></div>
+    <div class="ath-load"><span>${t('load_label')}</span><b id="load-preview"></b></div>
     <button class="btn" data-action="submit-post">${t('save_load')}</button>
   </div>`;
 }
@@ -1368,13 +1535,17 @@ function attachHandlers(){
       POST_FORM.duration = durationInput.value;
       const pv = document.getElementById('load-preview');
       if(POST_FORM.pse!=null && POST_FORM.duration){
-        const val = (POST_FORM.pse*parseFloat(POST_FORM.duration)).toFixed(0);
-        pv.textContent = STATE.lang==='ru'
-          ? 'Нагрузка = PSE (' + POST_FORM.pse + ') × ' + POST_FORM.duration + ' мин = ' + val
-          : 'Carga da sessão = PSE (' + POST_FORM.pse + ') × ' + POST_FORM.duration + ' min = ' + val;
+        pv.textContent = (POST_FORM.pse*parseFloat(POST_FORM.duration)).toFixed(0) + ' ' + t('ua_unit');
       } else { pv.textContent=''; }
     };
     durationInput.oninput = updatePreview;
+    document.querySelectorAll('[data-step]').forEach(b=>{
+      b.onclick = ()=>{
+        const cur = parseFloat(durationInput.value) || 0;
+        durationInput.value = Math.min(240, Math.max(5, cur + parseInt(b.getAttribute('data-step'))));
+        updatePreview();
+      };
+    });
     updatePreview();
   }
 }
