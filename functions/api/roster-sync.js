@@ -1,8 +1,11 @@
-// POST /api/roster-sync {roster, staffRoster} — full replace of the roster table, run inside
-// one D1 batch (atomic). Roster/staff/password changes are infrequent and staff-only, so a
-// simple full-replace is the least code and least risk of the options, and it matches how the
-// frontend already keeps STATE.roster/staffRoster as the in-memory source of truth before
-// calling this.
+// POST /api/roster-sync {roster, staffRoster} — staff-only full replace of the roster list.
+//
+// Each item is {name} or {name, hash}. `hash` is only present when staff just created the
+// account or reset its password; an item without `hash` keeps the password already stored.
+// Anyone missing from the lists is removed . The only call allowed
+// without being logged in is the very first staff-account setup, while no staff exists yet.
+import { ensureSchema, getSession, unauthorized, forbidden, isHash } from '../_lib/auth.js';
+
 export async function onRequestPost(context) {
   const { request, env } = context;
   let body;
@@ -11,18 +14,47 @@ export async function onRequestPost(context) {
   const staffRoster = Array.isArray(body && body.staffRoster) ? body.staffRoster : [];
 
   for (const a of [...roster, ...staffRoster]) {
-    if (!a || typeof a.name !== 'string' || typeof a.hash !== 'string') {
-      return new Response('bad request: each entry needs name and hash', { status: 400 });
+    if (!a || typeof a.name !== 'string' || !a.name) {
+      return new Response('bad request: each entry needs a name', { status: 400 });
+    }
+    if (a.hash !== undefined && !isHash(a.hash)) {
+      return new Response('bad request: invalid hash', { status: 400 });
     }
   }
 
   try {
-    const stmts = [env.DB.prepare('DELETE FROM roster')];
-    for (const a of roster) {
-      stmts.push(env.DB.prepare('INSERT INTO roster (name, role, hash) VALUES (?, ?, ?)').bind(a.name, 'athlete', a.hash));
+    await ensureSchema(env);
+    const session = await getSession(env, request);
+    const existingRows = (await env.DB.prepare('SELECT name, role, hash FROM roster').all()).results;
+    const staffExists = existingRows.some((r) => r.role === 'staff');
+
+    if (session) {
+      if (session.role !== 'staff') return forbidden();
+    } else if (staffExists) {
+      return unauthorized();
+    } else if (!staffRoster.length) {
+      return new Response('bad request', { status: 400 }); // bootstrap must create a staff account
     }
-    for (const a of staffRoster) {
-      stmts.push(env.DB.prepare('INSERT INTO roster (name, role, hash) VALUES (?, ?, ?)').bind(a.name, 'staff', a.hash));
+    // Never allow a change that leaves the app with no staff account at all.
+    if (!staffRoster.length) return new Response('bad request: at least one staff member required', { status: 400 });
+
+    const oldHash = new Map(existingRows.map((r) => [r.role + ':' + r.name, r.hash]));
+    const finalRows = [];
+    for (const [role, list] of [['athlete', roster], ['staff', staffRoster]]) {
+      const seen = new Set();
+      for (const a of list) {
+        if (seen.has(a.name)) continue;
+        seen.add(a.name);
+        const key = role + ':' + a.name;
+        const prev = oldHash.get(key);
+        const hash = a.hash !== undefined ? a.hash : (prev || '');
+        finalRows.push([a.name, role, hash]);
+      }
+    }
+
+    const stmts = [env.DB.prepare('DELETE FROM roster')];
+    for (const [name, role, hash] of finalRows) {
+      stmts.push(env.DB.prepare('INSERT INTO roster (name, role, hash) VALUES (?, ?, ?)').bind(name, role, hash));
     }
     await env.DB.batch(stmts);
     return Response.json({ ok: true });

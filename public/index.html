@@ -231,9 +231,56 @@ let DOC_STATE = {"roster":[],"staffRoster":[],"entries":{}};
    loadDocState() / refreshDocState() / publishDocState() keep the same names and shapes the
    rest of the app already calls, so every screen and action handler below is unchanged —
    only what happens inside these functions is new. */
+/* Every call to the backend goes through apiFetch, which attaches the login token. A 401 on a
+   protected call means the session ended (expired, password reset, account removed), so the
+   user is sent back to the start screen. */
+/* Credentials (name, role and the password HASH, never the password) live only in this tab's
+   sessionStorage and are sent with every call; the server checks them each time. */
+function getCred(){ try{ return JSON.parse(sessionStorage.getItem('cc_cred')||'null'); }catch(e){ return null; } }
+function setCred(c){ try{ sessionStorage.setItem('cc_cred', JSON.stringify(c)); }catch(e){} }
+async function apiFetch(url, opts){
+  opts = opts || {};
+  const headers = Object.assign({'Content-Type':'application/json'}, opts.headers || {});
+  const cred = getCred();
+  if(cred){ headers['X-CC-Name'] = encodeURIComponent(cred.name); headers['X-CC-Role'] = cred.role; headers['X-CC-Hash'] = cred.hash; }
+  const res = await fetch(url, Object.assign({}, opts, {headers}));
+  if(res.status === 401 && cred && url !== '/api/login') handleSessionEnded();
+  return res;
+}
+function handleSessionEnded(){
+  clearSessions(true);
+  STATE.currentAthlete = null; STATE.currentStaff = null; STATE.staffLoggedIn = false;
+  showToast(STATE.lang==='ru' ? 'Сеанс завершён. Войдите снова.' : 'Sessão encerrada. Entre novamente.');
+  go('landing');
+}
+/* Password check happens on the server. Returns {ok:true} or {ok:false, error}. */
+async function apiLogin(name, role, password){
+  const hash = await hashPassword(password);
+  try{
+    const res = await fetch('/api/login', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({name, role, hash})
+    });
+    let data = {}; try{ data = await res.json(); }catch(e){}
+    if(res.ok && data.ok){
+      setCred({name, role, hash});
+      await refreshDocState();   // now loads this user's entries
+      return {ok:true};
+    }
+    return {ok:false, error: data.error || ('http_'+res.status)};
+  }catch(e){
+    return {ok:false, error:'network'};
+  }
+}
+function loginErrorToast(error){
+  if(error==='locked') return STATE.lang==='ru' ? 'Слишком много попыток. Подождите несколько минут.' : 'Muitas tentativas. Aguarde alguns minutos.';
+  if(error==='wrong_password') return t('wrong_password_toast');
+  if(error==='no_password') return t('no_password_toast');
+  return STATE.lang==='ru' ? 'Не удалось войти. Попробуйте ещё раз.' : 'Não deu para entrar agora. Tente de novo.';
+}
 async function loadDocState(){
   try{
-    const res = await fetch('/api/state', {cache:'no-store'});
+    const res = await apiFetch('/api/state', {cache:'no-store'});
     if(res.ok){
       const data = await res.json();
       if(data && typeof data==='object') DOC_STATE = data;
@@ -256,11 +303,14 @@ async function refreshDocState(){
    old lost-update risk between two athletes submitting around the same time. */
 async function publishDocState(){
   try{
-    const res = await fetch('/api/roster-sync', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
+    const res = await apiFetch('/api/roster-sync', {
+      method: 'POST',
       body: JSON.stringify({roster: STATE.roster, staffRoster: STATE.staffRoster})
     });
     if(!res.ok) throw new Error('HTTP '+res.status);
+    // Password hashes only live in memory until this call succeeds; drop them right after so a
+    // later sync can never overwrite a password someone changed in the meantime.
+    for(const a of [...STATE.roster, ...STATE.staffRoster]){ if(a.hash){ a.hasPassword = true; delete a.hash; } }
     DOC_STATE.roster = STATE.roster; DOC_STATE.staffRoster = STATE.staffRoster;
     return true;
   }catch(e){
@@ -290,8 +340,8 @@ async function submitEntry(name, date, patch){
   try{ sessionStorage.setItem('cc_pending_submit', JSON.stringify({name, date, patch, ts: Date.now()})); }catch(e){}
   upsertEntry(name, date, patch);
   try{
-    const res = await fetch('/api/entry', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
+    const res = await apiFetch('/api/entry', {
+      method: 'POST',
       body: JSON.stringify({name, date, patch})
     });
     if(!res.ok) throw new Error('HTTP '+res.status);
@@ -311,8 +361,8 @@ async function recoverPendingSubmit(){
 }
 async function clearAthleteEntries(name){
   try{
-    const res = await fetch('/api/clear-entries', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
+    const res = await apiFetch('/api/clear-entries', {
+      method: 'POST',
       body: JSON.stringify({name})
     });
     if(!res.ok) throw new Error('HTTP '+res.status);
@@ -609,7 +659,11 @@ let STATE = {
    logged in survives it, so the athlete/staff never has to log back in mid-questionnaire. */
 function saveAthleteSession(name){ try{ sessionStorage.setItem('cc_athlete_session', name); }catch(e){} }
 function saveStaffSession(name){ try{ sessionStorage.setItem('cc_staff_session', name); }catch(e){} }
-function clearSessions(){ try{ sessionStorage.removeItem('cc_athlete_session'); sessionStorage.removeItem('cc_staff_session'); }catch(e){} }
+function clearSessions(skipServer){
+  try{
+    sessionStorage.removeItem('cc_athlete_session'); sessionStorage.removeItem('cc_staff_session'); sessionStorage.removeItem('cc_cred'); sessionStorage.removeItem('cc_token');
+  }catch(e){}
+}
 /* Same reasoning as the session persistence above: a reload must not silently switch a Russian-
    speaking athlete back to Portuguese mid-questionnaire, so the language choice survives it too. */
 function saveLang(lang){ try{ sessionStorage.setItem('cc_lang', lang); }catch(e){} }
@@ -624,10 +678,13 @@ async function init(){
     const savedAthlete = sessionStorage.getItem('cc_athlete_session');
     const savedLang = sessionStorage.getItem('cc_lang');
     if(savedLang==='pt' || savedLang==='ru') STATE.lang = savedLang;
-    if(savedStaff && STATE.staffRoster.some(a=>a.name===savedStaff)){
-      STATE.currentStaff = savedStaff; STATE.staffLoggedIn = true; STATE.screen = 'staff_dash';
-    } else if(savedAthlete && STATE.roster.some(a=>a.name===savedAthlete)){
-      STATE.currentAthlete = savedAthlete; STATE.screen = 'athlete_home';
+    const me = DOC_STATE.me;   // identity confirmed by the server from the credentials
+    if(me && me.role==='staff'){
+      STATE.currentStaff = me.name; STATE.staffLoggedIn = true; STATE.screen = 'staff_dash';
+    } else if(me && me.role==='athlete'){
+      STATE.currentAthlete = me.name; STATE.screen = 'athlete_home';
+    } else if(getCred()){
+      clearSessions(true);   // token no longer valid
     }
   }catch(e){}
   render();
@@ -1349,17 +1406,12 @@ async function onAction(e){
     if(!p1 || p1.length<4){ showToast(t('password_too_short_toast')); return; }
     if(p1!==p2){ showToast(t('password_mismatch_toast')); return; }
     const hash = await hashPassword(p1);
-    if(STATE.staffLoggedIn){
-      const member = STATE.staffRoster.find(a=>a.name===STATE.currentStaff);
-      if(member) member.hash = hash;
-      DOC_STATE.staffRoster = STATE.staffRoster;
-    } else {
-      const athlete = STATE.roster.find(a=>a.name===STATE.currentAthlete);
-      if(athlete) athlete.hash = hash;
-      DOC_STATE.roster = STATE.roster;
-    }
-    const ok = await publishDocState();
-    if(ok){ showToast(t('password_changed_toast')); go(STATE.staffLoggedIn ? 'staff_dash' : 'athlete_home'); }
+    let ok = false;
+    try{
+      const res = await apiFetch('/api/set-password', {method:'POST', body: JSON.stringify({hash})});
+      ok = res.ok;
+    }catch(e){ ok = false; }
+    if(ok){ const c = getCred(); if(c){ c.hash = hash; setCred(c); } showToast(t('password_changed_toast')); go(STATE.staffLoggedIn ? 'staff_dash' : 'athlete_home'); }
     else showToast('Não deu para salvar agora. Tente de novo em instantes.');
   }
   else if(action==='body-view'){ STATE.bodyView = e.currentTarget.getAttribute('data-view'); render(); }
@@ -1370,9 +1422,9 @@ async function onAction(e){
     if(!sel){ showToast(t('choose_name_toast')); return; }
     if(!pass){ showToast(t('type_password_toast')); return; }
     const athlete = STATE.roster.find(a=>a.name===sel);
-    if(!athlete || !athlete.hash){ showToast(t('no_password_toast')); return; }
-    const hash = await hashPassword(pass);
-    if(hash !== athlete.hash){ showToast(t('wrong_password_toast')); return; }
+    if(!athlete || !athlete.hasPassword){ showToast(t('no_password_toast')); return; }
+    const login = await apiLogin(sel, 'athlete', pass);
+    if(!login.ok){ showToast(loginErrorToast(login.error)); return; }
     STATE.currentAthlete = sel;
     saveAthleteSession(sel);
     go('athlete_home');
@@ -1417,9 +1469,12 @@ async function onAction(e){
     const hash = await hashPassword(pass1);
     STATE.staffRoster.push({name, hash});
     DOC_STATE.staffRoster = STATE.staffRoster;
+    const saved = await publishDocState();   // allowed without login only while no staff account exists
+    if(!saved){ STATE.staffRoster = STATE.staffRoster.filter(a=>a.name!==name); return; }
+    const login = await apiLogin(name, 'staff', pass1);
+    if(!login.ok){ showToast(loginErrorToast(login.error)); return; }
     STATE.currentStaff = name; STATE.staffLoggedIn = true;
-    saveStaffSession(name); // stashed before publish: a reload mid-publish should not cost this login
-    await publishDocState();
+    saveStaffSession(name);
     go('staff_dash');
   }
   else if(action==='staff-login-submit'){
@@ -1428,9 +1483,9 @@ async function onAction(e){
     if(!sel){ showToast('Escolha um nome na lista'); return; }
     if(!pass){ showToast('Digite sua senha'); return; }
     const member = STATE.staffRoster.find(a=>a.name===sel);
-    if(!member || !member.hash){ showToast('Essa conta ainda não tem senha configurada.'); return; }
-    const hash = await hashPassword(pass);
-    if(hash !== member.hash){ showToast('Senha incorreta'); return; }
+    if(!member || !member.hasPassword){ showToast('Essa conta ainda não tem senha configurada.'); return; }
+    const login = await apiLogin(sel, 'staff', pass);
+    if(!login.ok){ showToast(loginErrorToast(login.error)); return; }
     STATE.currentStaff = sel; STATE.staffLoggedIn = true;
     saveStaffSession(sel);
     go('staff_dash');

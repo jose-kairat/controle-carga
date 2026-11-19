@@ -21,3 +21,11 @@ No painel da comissão, o botão **Relatório semanal** abre uma tela com:
 - **Imprimir / salvar PDF** (layout próprio de impressão, A4 paisagem) e exportação **CSV semanal** e **CSV diário** (separador `;`, abre direto no Excel).
 
 Tudo é calculado no navegador a partir de `/api/state`; não exige mudança no banco nem nas funções.
+
+## Login e segurança
+
+- A senha é conferida **no servidor** (`/api/login`); o navegador nunca recebe as senhas (hashes) de ninguém.
+- Sem sessões nem tabelas novas: o navegador envia o hash da senha em cada chamada e o servidor confere. Atleta só lê e grava os **próprios** dados; a comissão vê tudo.
+- Limpar dados, alterar o elenco e redefinir senhas exigem login da comissão.
+- Nenhuma mudança no banco: usa só a tabela `roster` que já existe.
+- O histórico de entradas é mantido por toda a temporada (não há mais poda de 120 dias).
