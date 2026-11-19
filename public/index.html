@@ -237,6 +237,29 @@
   .landing .role-card{border-radius:16px; min-height:84px;}
   .toast{border-radius:12px;}
 
+  /* ---- Comissão: mesmo visual novo (cartões arredondados, alvos de toque maiores) + avaliações ---- */
+  .dash{background:#0F0F10;}
+  .dash .topbar.dark{padding:14px 16px; min-height:64px;}
+  .dash .back-btn{min-height:44px; padding:0 8px;}
+  .dash .player-card, .dash .gauge-big, .dash .metric-box, .dash .chart-card, .dash .sum-chip, .dash .status-row, .dash .daily-table-wrap{background:#1A1A1C; border-radius:16px; border-color:rgba(255,255,255,0.1);}
+  .dash .daily-table th:first-child, .dash .daily-table td:first-child{background:#1A1A1C;}
+  .dash .btn{height:52px; border-radius:12px;}
+  .dash .btn.secondary{border-color:rgba(255,255,255,0.25); color:#fff;}
+  .dash .player-card{padding:16px; min-height:68px;}
+  .crest-sm{width:36px; height:36px; object-fit:contain; flex-shrink:0;}
+  .tag.good{background:rgba(63,163,77,0.2); color:#7FCB8B;}
+  .tag.warn{background:rgba(232,185,35,0.18); color:#F0CB5A;}
+  .tag.bad{background:rgba(194,59,44,0.2); color:#E38C7C;}
+  .ev-sec{margin-top:24px;}
+  .ev-sec h3{margin:0 0 10px; font-family:'Barlow Condensed',sans-serif; text-transform:uppercase; font-size:18px; letter-spacing:0.04em; color:#fff;}
+  .ev-kpis{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-bottom:12px;}
+  .ev-kpi{background:#1A1A1C; border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:12px;}
+  .ev-kpi .l{font-size:10px; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-on-dark-dim);}
+  .ev-kpi .v{font-family:'JetBrains Mono',monospace; font-size:20px; font-weight:700; margin-top:3px;}
+  .ev-kpi .s{font-size:11px; color:var(--text-on-dark-dim); margin-top:2px;}
+  .ev-table td.up{color:#E38C7C;} .ev-table td.down{color:#7FCB8B;}
+  .ev-note{font-size:11px; color:var(--text-on-dark-dim); margin-top:8px; line-height:1.45;}
+
   /* ---- Relatório semanal (comissão) ---- */
   .rp-actions{display:flex; gap:8px; flex-wrap:wrap; margin:12px 0 4px;}
   .rp-actions .btn{flex:1; min-width:120px;}
@@ -798,6 +821,7 @@ function render(){
   else if(STATE.screen==='staff_dash') html = renderStaffDash();
   else if(STATE.screen==='staff_manage') html = renderStaffManage();
   else if(STATE.screen==='staff_report') html = renderStaffReport();
+  else if(STATE.screen==='staff_eval') html = renderStaffEval();
   else if(STATE.screen==='staff_detail') html = renderStaffDetail();
   else if(STATE.screen==='change_password') html = renderChangePassword();
   if(STATE.toast) html += `<div class="toast">${STATE.toast}</div>`;
@@ -805,6 +829,7 @@ function render(){
   attachHandlers();
   if(STATE.screen==='staff_dash') loadStaffDash();
   if(STATE.screen==='staff_report') loadStaffReport();
+  if(STATE.screen==='staff_eval') loadStaffEval();
   if(STATE.screen==='staff_detail') drawStaffDetailCharts();
   if(STATE.screen==='athlete_history') loadAthleteHistoryStatus();
 }
@@ -1194,7 +1219,7 @@ function dailyResponsesTableHtml(summaries){
 function renderStaffDash(){
   return `
   <div class="dash">
-    <div class="topbar dark"><button class="back-btn" data-action="go-landing">‹ Sair</button><div class="topbar-title">Painel do elenco</div><button class="back-btn" data-action="go-staff-manage">Elenco</button></div>
+    <div class="topbar dark"><button class="back-btn" data-action="go-landing">‹ Sair</button><div class="topbar-title" style="display:flex;align-items:center;gap:10px;"><img class="crest-sm" src="${LOGO_B64}" alt="">Painel do elenco</div><button class="back-btn" data-action="go-staff-manage">Elenco</button></div>
     <div class="hint" style="padding:0 16px; color:var(--text-on-dark-dim);">Logado como ${STATE.currentStaff||''} · <button class="back-btn" style="display:inline; padding:0;" data-action="go-change-password">trocar minha senha</button></div>
     <div class="dash-body" id="staff-dash-body">Carregando…</div>
   </div>`;
@@ -1228,7 +1253,10 @@ async function loadStaffDash(){
     </div>`;
   }).join('');
   body.innerHTML = `
-    <button class="btn small secondary" data-action="go-staff-report" style="width:100%; margin-bottom:14px;">Relatório semanal</button>
+    <div style="display:flex; gap:10px; margin-bottom:14px;">
+      <button class="btn small secondary" data-action="go-staff-report" style="flex:1;">Relatório semanal</button>
+      <button class="btn small secondary" data-action="go-staff-eval" style="flex:1;">Avaliações físicas</button>
+    </div>
     <div class="dash-summary">
       <div class="sum-chip risk-alta"><div class="n">${alta}</div><div class="l">Risco alto</div></div>
       <div class="sum-chip risk-caution"><div class="n">${caution}</div><div class="l">Atenção</div></div>
@@ -1288,12 +1316,14 @@ async function drawStaffDetailCharts(){
   const name = STATE.staffDetailAthlete;
   if(!document.getElementById('staff-detail-body')) return;
   await refreshDocState();
+  const ev = await loadEval();
   const host = document.getElementById('staff-detail-body');
   if(!host || STATE.screen!=='staff_detail') return; // navigated away while the fetch was in flight
   const byAthlete = DOC_STATE.entries || {};
   const entries = byAthlete[name] || [];
+  const evalBlock = evalAthleteHtml(name, ev);
   if(!entries.length){
-    host.innerHTML = `<div class="empty">Ainda sem registros para ${name}.</div>`;
+    host.innerHTML = `<div class="empty">Ainda sem registros de carga para ${name}.</div>` + evalBlock;
     return;
   }
   const s = computeSeries(entries);
@@ -1319,9 +1349,108 @@ async function drawStaffDetailCharts(){
       ${entries.filter(e=>e.dor>0).slice(-8).reverse().map(e=>`
         <div class="pain-log-row"><span>${(e.dorRegiao?e.dorRegiao.label:'Região não informada')+' — dor '+e.dor}</span><span class="d">${fmtShort(e.date)}</span></div>
       `).join('') || '<div class="hint">Sem registros de dor recentes.</div>'}
-    </div>`;
+    </div>
+    ${evalBlock}`;
   buildLoadChart('sc1', s);
   buildWellnessChart('sc2', entries);
+}
+/* ============================= STAFF: avaliações físicas ============================= */
+/* Dados importados da planilha de avaliações; vêm de /api/avaliacoes (só comissão), somente leitura. */
+let EVAL_DATA = null;
+async function loadEval(){
+  if(EVAL_DATA) return EVAL_DATA;
+  try{
+    const res = await apiFetch('/api/avaliacoes', {cache:'no-store'});
+    if(res.ok) EVAL_DATA = await res.json();
+  }catch(e){}
+  return EVAL_DATA;
+}
+function evPct(v){ return v==null ? '—' : (v*100).toFixed(1).replace('.',',')+'%'; }
+function evN(v,d){ return v==null ? '—' : Number(v).toFixed(d==null?1:d).replace('.',','); }
+function evDelta(v,d,inv){ if(v==null||isNaN(v)) return '—'; const c = v===0?'':(inv ? (v>0?'down':'up') : (v>0?'up':'down')); return `<td class="${c}">${v>0?'+':''}${evN(v,d)}</td>`; }
+function evDate(d){ const p=String(d||'').split('-'); return p.length===3 ? p[2]+'/'+p[1]+'/'+p[0].slice(2) : (d||'—'); }
+function evSituacaoTag(sit){
+  if(!sit) return '';
+  const x = String(sit).toLowerCase();
+  const cls = x.includes('meta') ? 'good' : (x.includes('acima')||x.includes('abaixo')) ? 'warn' : 'nodata';
+  return `<span class="tag ${cls}">${esc(sit)}</span>`;
+}
+function evAvalTag(a){
+  if(!a) return '';
+  const x = String(a).toLowerCase();
+  const cls = (x==='ótimo'||x==='bom') ? 'good' : (x==='atenção') ? 'warn' : (x==='ruim') ? 'bad' : 'nodata';
+  return `<span class="tag ${cls}">${esc(a)}</span>`;
+}
+function evalAthleteHtml(name, ev){
+  const a = ev && ev.atletas ? ev.atletas[name] : null;
+  if(!ev) return `<div class="ev-sec"><h3>Avaliações físicas</h3><div class="hint">Não foi possível carregar as avaliações agora.</div></div>`;
+  if(!a || !Object.keys(a).length) return `<div class="ev-sec"><h3>Avaliações físicas</h3><div class="hint">Sem avaliações para ${esc(name)} na planilha.</div></div>`;
+  let out = `<div class="ev-sec"><h3>Avaliações físicas</h3>`;
+  const comp = a.comp || [];
+  const pi = a.pesoIdeal;
+  if(comp.length){
+    const last = comp[comp.length-1];
+    out += `<div class="ev-kpis">
+      <div class="ev-kpi"><div class="l">Peso</div><div class="v">${evN(last.peso)} kg</div>${pi && pi.pesoIdeal ? `<div class="s">ideal ${evN(pi.pesoIdeal)} kg</div>` : ''}</div>
+      <div class="ev-kpi"><div class="l">% Gordura</div><div class="v">${evPct(last.gordura)}</div>${pi && pi.alvo ? `<div class="s">alvo ${evPct(pi.alvo)}</div>` : ''}</div>
+      <div class="ev-kpi"><div class="l">Massa magra</div><div class="v">${evN(last.massaMagra)} kg</div></div>
+      <div class="ev-kpi"><div class="l">Situação</div><div class="v" style="font-size:15px;">${pi ? evSituacaoTag(pi.situacao) : ''} ${evAvalTag(last.avaliacao)}</div></div>
+    </div>`;
+    const rows = comp.map((c,i)=>{
+      const prev = i>0 ? comp[i-1] : null;
+      const dg = prev && c.massaGorda!=null && prev.massaGorda!=null ? c.massaGorda-prev.massaGorda : null;
+      const dm = prev && c.massaMagra!=null && prev.massaMagra!=null ? c.massaMagra-prev.massaMagra : null;
+      return `<tr><td class="name">${evDate(c.data)}</td><td>${evN(c.peso)}</td><td>${evPct(c.gordura)}</td><td>${evN(c.massaGorda)}</td><td>${evN(c.massaMagra)}</td>${dg==null?'<td class="dim">—</td>':evDelta(dg,1,false)}${dm==null?'<td class="dim">—</td>':evDelta(dm,1,true)}</tr>`;
+    }).join('');
+    out += `<div class="daily-table-wrap"><table class="daily-table ev-table"><thead><tr><th>Data</th><th>Peso</th><th>% Gord.</th><th>M. gorda</th><th>M. magra</th><th>Δ gord.</th><th>Δ magra</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  }
+  const f = a.forca;
+  if(f){
+    const row = (lbl,k)=>{ const x=f[k]; const r=a.forcaRelativa?a.forcaRelativa[k]:null; return x ? `<tr><td class="name">${lbl}</td><td>${evN(x.reps,0)} × ${evN(x.carga,0)} kg</td><td>${evN(x.estimado,0)}</td><td>${evN(r,2)}</td></tr>` : `<tr><td class="name">${lbl}</td><td class="dim">—</td><td class="dim">—</td><td class="dim">—</td></tr>`; };
+    out += `<div class="section-title">Força</div><div class="daily-table-wrap"><table class="daily-table ev-table"><thead><tr><th>Exercício</th><th>Reps × carga</th><th>Estimado (kg)</th><th>Índice relativo</th></tr></thead><tbody>${row('Agachamento','agachamento')}${row('Supino','supino')}${row('Terra','terra')}</tbody></table></div>`;
+  }
+  const kp = [];
+  if(a.illinois) kp.push(`<div class="ev-kpi"><div class="l">Illinois (melhor)</div><div class="v">${evN(a.illinois.melhor,2)} s</div><div class="s">${a.illinois.tentativas.map(x=>evN(x,2)).join(' · ')}</div></div>`);
+  if(a.salto) kp.push(`<div class="ev-kpi"><div class="l">Salto (melhor)</div><div class="v">${evN(a.salto.melhor,2)}</div><div class="s">${a.salto.tentativas.map(x=>evN(x,2)).join(' · ')}</div></div>`);
+  if(a.velocidade && (a.velocidade.m10||a.velocidade.m30)) kp.push(`<div class="ev-kpi"><div class="l">Velocidade 10 m / 30 m</div><div class="v">${evN(a.velocidade.m10)} / ${evN(a.velocidade.m30)}</div></div>`);
+  if(a.limiares){
+    if(a.limiares.vo2max) kp.push(`<div class="ev-kpi"><div class="l">VO2máx</div><div class="v">${evN(a.limiares.vo2max)}</div></div>`);
+    if(a.limiares.fcAerobico||a.limiares.fcAnaerobico) kp.push(`<div class="ev-kpi"><div class="l">FC limiares (aer. / anaer.)</div><div class="v">${evN(a.limiares.fcAerobico,0)} / ${evN(a.limiares.fcAnaerobico,0)}</div></div>`);
+  }
+  if(kp.length) out += `<div class="section-title">Desempenho</div><div class="ev-kpis">${kp.join('')}</div>`;
+  out += `<div class="ev-note">Fonte: planilha de avaliações importada em ${evDate(ev.geradoEm)}. Salto e velocidade aparecem como na planilha.</div></div>`;
+  return out;
+}
+function renderStaffEval(){
+  return `
+  <div class="dash">
+    <div class="topbar dark"><button class="back-btn" data-action="go-staff">‹ Elenco</button><div class="topbar-title">Avaliações físicas</div><div style="width:50px"></div></div>
+    <div class="dash-body" id="staff-eval-body">Carregando…</div>
+  </div>`;
+}
+async function loadStaffEval(){
+  const ev = await loadEval();
+  const body = document.getElementById('staff-eval-body');
+  if(!body || STATE.screen!=='staff_eval') return;
+  if(!ev){ body.innerHTML = `<div class="empty">Não foi possível carregar as avaliações agora.</div>`; return; }
+  const rows = (STATE.roster||[]).map(r=>{
+    const a = ev.atletas[r.name] || {};
+    const c = a.comp && a.comp.length ? a.comp[a.comp.length-1] : null;
+    const f = a.forca;
+    return `<tr class="${Object.keys(a).length?'':'no-data'}" data-action="open-staff-detail" data-name="${esc(r.name)}" style="cursor:pointer;">
+      <td class="name">${esc(r.name)}</td>
+      <td>${c?evN(c.peso):'—'}</td><td>${c?evPct(c.gordura):'—'}</td>
+      <td>${a.pesoIdeal?evSituacaoTag(a.pesoIdeal.situacao):'—'}</td>
+      <td>${f&&f.agachamento?evN(f.agachamento.estimado,0):'—'}</td>
+      <td>${a.illinois?evN(a.illinois.melhor,2):'—'}</td>
+      <td>${a.salto?evN(a.salto.melhor,2):'—'}</td>
+      <td>${a.limiares&&a.limiares.vo2max?evN(a.limiares.vo2max):'—'}</td></tr>`;
+  }).join('');
+  body.innerHTML = `
+    <div class="section-hint">Toque em um atleta para ver a ficha completa. Dados da planilha, somente leitura.</div>
+    <div class="daily-table-wrap"><table class="daily-table ev-table"><thead><tr><th>Atleta</th><th>Peso</th><th>% Gord.</th><th>Situação</th><th>Agach. est.</th><th>Illinois (s)</th><th>Salto</th><th>VO2máx</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="ev-note">Fonte: planilha de avaliações importada em ${evDate(ev.geradoEm)}. Atletas sem avaliação aparecem esmaecidos.</div>`;
+  attachHandlers();
 }
 /* ============================= STAFF: relatório semanal ============================= */
 /* Tudo é calculado no navegador a partir de /api/state (mesma fonte do painel) — sem mudança no
@@ -1561,6 +1690,7 @@ async function onAction(e){
   else if(action==='go-staff-gate') go('staff_gate');
   else if(action==='go-staff') go('staff_dash');
   else if(action==='go-staff-report') go('staff_report');
+  else if(action==='go-staff-eval') go('staff_eval');
   else if(action==='report-weeks'){ REPORT_WEEKS = parseInt(e.currentTarget.getAttribute('data-weeks'))||4; loadStaffReport(); }
   else if(action==='report-print') window.print();
   else if(action==='report-csv-weekly') exportReportCsv('weekly');
