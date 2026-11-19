@@ -1411,14 +1411,14 @@ function evalAthleteHtml(name, ev){
   }
   const kp = [];
   if(a.illinois) kp.push(`<div class="ev-kpi"><div class="l">Illinois (melhor)</div><div class="v">${evN(a.illinois.melhor,2)} s</div><div class="s">${a.illinois.tentativas.map(x=>evN(x,2)).join(' · ')}</div></div>`);
-  if(a.salto) kp.push(`<div class="ev-kpi"><div class="l">Salto (melhor)</div><div class="v">${evN(a.salto.melhor,2)}</div><div class="s">${a.salto.tentativas.map(x=>evN(x,2)).join(' · ')}</div></div>`);
-  if(a.velocidade && (a.velocidade.m10||a.velocidade.m30)) kp.push(`<div class="ev-kpi"><div class="l">Velocidade 10 m / 30 m</div><div class="v">${evN(a.velocidade.m10)} / ${evN(a.velocidade.m30)}</div></div>`);
+  if(a.salto) kp.push(`<div class="ev-kpi"><div class="l">Salto (melhor)</div><div class="v">${evN(a.salto.melhor,2)} m</div><div class="s">${a.salto.tentativas.map(x=>evN(x,2)).join(' · ')}</div></div>`);
+  if(a.velocidade && (a.velocidade.m10||a.velocidade.m30)) kp.push(`<div class="ev-kpi"><div class="l">Velocidade 10 m / 30 m</div><div class="v">${evN(a.velocidade.m10)} / ${evN(a.velocidade.m30)}</div><div class="s">km/h</div></div>`);
   if(a.limiares){
     if(a.limiares.vo2max) kp.push(`<div class="ev-kpi"><div class="l">VO2máx</div><div class="v">${evN(a.limiares.vo2max)}</div></div>`);
     if(a.limiares.fcAerobico||a.limiares.fcAnaerobico) kp.push(`<div class="ev-kpi"><div class="l">FC limiares (aer. / anaer.)</div><div class="v">${evN(a.limiares.fcAerobico,0)} / ${evN(a.limiares.fcAnaerobico,0)}</div></div>`);
   }
   if(kp.length) out += `<div class="section-title">Desempenho</div><div class="ev-kpis">${kp.join('')}</div>`;
-  out += `<div class="ev-note">Fonte: planilha de avaliações importada em ${evDate(ev.geradoEm)}. Salto e velocidade aparecem como na planilha.</div></div>`;
+  out += `<div class="ev-note">Fonte: planilha de avaliações importada em ${evDate(ev.geradoEm)}.</div></div>`;
   return out;
 }
 function renderStaffEval(){
@@ -1448,7 +1448,7 @@ async function loadStaffEval(){
   }).join('');
   body.innerHTML = `
     <div class="section-hint">Toque em um atleta para ver a ficha completa. Dados da planilha, somente leitura.</div>
-    <div class="daily-table-wrap"><table class="daily-table ev-table"><thead><tr><th>Atleta</th><th>Peso</th><th>% Gord.</th><th>Situação</th><th>Agach. est.</th><th>Illinois (s)</th><th>Salto</th><th>VO2máx</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="daily-table-wrap"><table class="daily-table ev-table"><thead><tr><th>Atleta</th><th>Peso</th><th>% Gord.</th><th>Situação</th><th>Agach. est.</th><th>Illinois (s)</th><th>Salto (m)</th><th>VO2máx</th></tr></thead><tbody>${rows}</tbody></table></div>
     <div class="ev-note">Fonte: planilha de avaliações importada em ${evDate(ev.geradoEm)}. Atletas sem avaliação aparecem esmaecidos.</div>`;
   attachHandlers();
 }
